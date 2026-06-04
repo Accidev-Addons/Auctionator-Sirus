@@ -96,10 +96,28 @@ local function InitializeSplashScreen()
   end
 end
 
+local DEFAULT_TAB_NAME_BY_VALUE = {
+  [1] = "ShoppingLists",
+  [2] = "Selling",
+  [3] = "Cancelling",
+  [4] = "Auctionator",
+}
+
 local function ShowDefaultTab()
   local tabs = AuctionatorAHTabsContainer.Tabs
 
-  local chosenTab = tabs[Auctionator.Config.Get(Auctionator.Config.Options.DEFAULT_TAB)]
+  local configValue = Auctionator.Config.Get(Auctionator.Config.Options.DEFAULT_TAB)
+  local wantedName = DEFAULT_TAB_NAME_BY_VALUE[configValue]
+
+  local chosenTab
+  if wantedName ~= nil then
+    for _, tab in ipairs(tabs) do
+      if tab:GetAttribute("displayMode") == wantedName then
+        chosenTab = tab
+        break
+      end
+    end
+  end
 
   if chosenTab then
     chosenTab:Click()

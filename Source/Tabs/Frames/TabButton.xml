@@ -20,4 +20,3 @@
       <OnShow>self:OnShow()</OnShow>
     </Scripts>
   </Button>
-</Ui>

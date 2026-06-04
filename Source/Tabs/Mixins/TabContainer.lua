@@ -1,13 +1,39 @@
 AuctionatorTabContainerMixin = {}
 
+local function ApplyTabButtonBehaviour(frame)
+  Mixin(frame, AuctionatorTabMixin)
+
+  local parent = frame:GetParent()
+  if not parent.Tabs then
+    parent.Tabs = {}
+  end
+  table.insert(parent.Tabs, frame)
+
+  frame:SetScript("OnShow", function(self)
+    self:OnShow()
+  end)
+end
+
 local function InitializeFromDetails(details)
   local frameName = "AuctionatorTabs_" .. details.name
-  local frame = CreateFrame(
+
+  local created, frame = pcall(
+    CreateFrame,
     "BUTTON",
     frameName,
     AuctionHouseFrame,
-    "AuctionatorTabButtonTemplate"
+    "AuctionHouseFrameDisplayModeTabTemplate"
   )
+
+  if not created or not frame then
+    Auctionator.Debug.Message(
+      "AuctionatorTabContainer: failed to create tab button, AH tab template unavailable",
+      frameName
+    )
+    return nil
+  end
+
+  ApplyTabButtonBehaviour(frame)
 
   frame:SetText(details.textLabel)
 
@@ -35,7 +61,10 @@ function AuctionatorTabContainerMixin:OnLoad()
   self.Tabs = {}
 
   for _, details in ipairs(Auctionator.Tabs.State.knownTabs) do
-    table.insert(self.Tabs, InitializeFromDetails(details))
+    local frame = InitializeFromDetails(details)
+    if frame then
+      table.insert(self.Tabs, frame)
+    end
   end
 
   self:HookTabs()
