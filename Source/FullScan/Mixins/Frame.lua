@@ -19,7 +19,20 @@ function AuctionatorFullScanFrameMixin:ResetData()
   self.dbKeysMapping = {}
 end
 
+local function IsReplicateScanSupported()
+  return C_AuctionHouse.GetNumReplicateItems ~= nil
+     and C_AuctionHouse.GetNumReplicateItems() ~= nil
+end
+
 function AuctionatorFullScanFrameMixin:InitiateScan()
+  if not IsReplicateScanSupported() then
+    self.state.TimeOfLastReplicateScan = time()
+    if Auctionator.State.IncrementalScanFrameRef ~= nil then
+      Auctionator.State.IncrementalScanFrameRef:InitiateScan()
+    end
+    return
+  end
+
   if self:CanInitiate() then
     Auctionator.EventBus:Fire(self, Auctionator.FullScan.Events.ScanStart)
 
@@ -78,7 +91,12 @@ function AuctionatorFullScanFrameMixin:CacheScanData()
   Auctionator.EventBus:Fire(self, Auctionator.FullScan.Events.ScanProgress, 0.2)
 
   self:ResetData()
-  self.waitingForData = C_AuctionHouse.GetNumReplicateItems()
+  self.waitingForData = C_AuctionHouse.GetNumReplicateItems() or 0
+
+  if self.waitingForData == 0 then
+    self:EndProcessing()
+    return
+  end
 
   self:ProcessBatch(
     0,
@@ -172,31 +190,36 @@ function AuctionatorFullScanFrameMixin:OnEvent(event, ...)
   end
 end
 
-local function GetInfo(replicateInfo, itemLink)
+local function GetInfo(replicateInfo)
   local count = replicateInfo[3]
   local buyoutPrice = replicateInfo[10]
+
+  if not buyoutPrice or buyoutPrice == 0 or not count or count == 0 then
+    return nil
+  end
+
   local effectivePrice = buyoutPrice / count
-  local available = replicateInfo[3]
-    
-  return effectivePrice, available
+
+  return effectivePrice, count
 end
 
 
 local function MergeInfo(scanData, dbKeysMapping)
   local allInfo = {}
-  local index = 0
 
   for index = 1, #scanData do
     local effectivePrice, available = GetInfo(scanData[index].replicateInfo)
 
-    for _, dbKey in ipairs(dbKeysMapping[index]) do
-      if allInfo[dbKey] == nil then
-        allInfo[dbKey] = {}
-      end
+    if effectivePrice ~= nil then
+      for _, dbKey in ipairs(dbKeysMapping[index]) do
+        if allInfo[dbKey] == nil then
+          allInfo[dbKey] = {}
+        end
 
-      table.insert(allInfo[dbKey],
-        { price = effectivePrice, available = available }
-      )
+        table.insert(allInfo[dbKey],
+          { price = effectivePrice, available = available }
+        )
+      end
     end
   end
 

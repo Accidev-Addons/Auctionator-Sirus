@@ -12,6 +12,8 @@ function AuctionatorIncrementalScanFrameMixin:OnLoad()
 
   self.doingFullScan = false
   self.state = Auctionator.SavedState
+  self.info = {}
+  self.infoCount = 0
 
   self:RegisterForEvents()
 end
@@ -31,6 +33,7 @@ end
 function AuctionatorIncrementalScanFrameMixin:OnEvent(event, ...)
   if event == "AUCTION_HOUSE_BROWSE_RESULTS_UPDATED" then
     self.info = {} -- New search results so reset info
+    self.infoCount = 0
 
     self:AddPrices(C_AuctionHouse.GetBrowseResults())
     self:NextStep()
@@ -66,15 +69,9 @@ function AuctionatorIncrementalScanFrameMixin:InitiateScan()
 end
 
 function AuctionatorIncrementalScanFrameMixin:FireProgressEvent()
-  local infoCount = 0
+  local infoCount = self.infoCount or 0
 
-  if self.info ~= nil then
-    for _, _  in pairs(self.info) do
-      infoCount = infoCount + 1
-    end
-  end
-
-  local dbCount = Auctionator.Database:GetItemCount()
+  local dbCount = self.previousDatabaseCount or Auctionator.Database:GetItemCount()
 
   -- 10% complete after making the browse request
   local progress = 0.1
@@ -96,6 +93,9 @@ end
 function AuctionatorIncrementalScanFrameMixin:AddPrices(results)
   Auctionator.Debug.Message("AuctionatorIncrementalScanFrameMixin:AddPrices()", results)
 
+  self.info = self.info or {}
+  self.infoCount = self.infoCount or 0
+
   for _, resultInfo in ipairs(results) do
     if resultInfo.totalQuantity ~= 0 then
       local allDBKeys = Auctionator.Utilities.DBKeyFromBrowseResult(resultInfo)
@@ -103,6 +103,7 @@ function AuctionatorIncrementalScanFrameMixin:AddPrices(results)
       for index, dbKey in ipairs(allDBKeys) do
         if self.info[dbKey] == nil then
           self.info[dbKey] = {}
+          self.infoCount = self.infoCount + 1
         end
 
         table.insert(self.info[dbKey],

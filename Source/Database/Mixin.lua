@@ -112,7 +112,12 @@ function Auctionator.DatabaseMixin:GetItemCount()
 end
 
 function Auctionator.DatabaseMixin:Prune()
-  local cutoffDay = GetScanDay() - Auctionator.Config.Get(Auctionator.Config.Options.PRICE_HISTORY_DAYS)
+  local currentDay = GetScanDay()
+  if Auctionator.SavedState ~= nil and Auctionator.SavedState.LastPruneDay == currentDay then
+    return
+  end
+
+  local cutoffDay = currentDay - Auctionator.Config.Get(Auctionator.Config.Options.PRICE_HISTORY_DAYS)
 
   local entriesPruned = 0
 
@@ -143,6 +148,10 @@ function Auctionator.DatabaseMixin:Prune()
         end
       end
     end
+  end
+
+  if Auctionator.SavedState ~= nil then
+    Auctionator.SavedState.LastPruneDay = currentDay
   end
 
   Auctionator.Debug.Message("Auctionator.DatabaseMixin:Prune Pruned " .. tostring(entriesPruned) .. " entries")

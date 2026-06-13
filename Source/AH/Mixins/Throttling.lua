@@ -5,8 +5,7 @@ local THROTTLING_EVENTS = {
   "AUCTION_HOUSE_THROTTLED_MESSAGE_QUEUED",
   "AUCTION_HOUSE_THROTTLED_MESSAGE_RESPONSE_RECEIVED",
   "AUCTION_HOUSE_THROTTLED_MESSAGE_SENT",
-  "AUCTION_HOUSE_THROTTLED_SYSTEM_READY",
-  "AUCTION_HOUSE_BROWSE_FAILURE"
+  "AUCTION_HOUSE_THROTTLED_SYSTEM_READY"
 }
 
 function AuctionatorAHThrottlingFrameMixin:OnLoad()
@@ -25,8 +24,7 @@ function AuctionatorAHThrottlingFrameMixin:OnEvent(eventName, ...)
   if eventName == "AUCTION_HOUSE_THROTTLED_SYSTEM_READY" then
     Auctionator.Debug.Message("normal ready")
 
-  elseif eventName == "AUCTION_HOUSE_BROWSE_FAILURE" or
-         eventName == "AUCTION_HOUSE_THROTTLED_MESSAGE_DROPPED" then
+  elseif eventName == "AUCTION_HOUSE_THROTTLED_MESSAGE_DROPPED" then
     Auctionator.Debug.Message("fail", eventName)
     self.failed = true
 
