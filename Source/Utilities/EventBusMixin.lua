@@ -87,7 +87,10 @@ function AuctionatorEventBusMixin:Fire(source, eventName, ...)
         #self.registeredListeners[current.eventName]
       )
       for _, listener in ipairs(allListeners) do
-        listener:ReceiveEvent(current.eventName, unpack(current.params))
+        local ok, err = pcall(listener.ReceiveEvent, listener, current.eventName, unpack(current.params))
+        if not ok then
+          geterrorhandler()(err)
+        end
       end
     end
 

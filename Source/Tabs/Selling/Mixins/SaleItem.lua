@@ -107,7 +107,7 @@ function AuctionatorSaleItemMixin:LockItem()
   end
 end
 
-function AuctionatorSaleItemMixin:OnUpdate()
+function AuctionatorSaleItemMixin:OnUpdate(elapsed)
   if self.itemInfo == nil then
     return
 
@@ -121,17 +121,25 @@ function AuctionatorSaleItemMixin:OnUpdate()
     return
   end
 
+  self.onUpdateElapsed = (self.onUpdateElapsed or 0) + (elapsed or 0)
+  if self.onUpdateElapsed < 0.1 then
+    return
+  end
+  self.onUpdateElapsed = 0
+
+  local postLimit = self:GetPostLimit()
+
   self.TotalPrice:SetText(
     Auctionator.Utilities.CreateMoneyString(
       self.Quantity:GetNumber() * self.Price:GetAmount()
     )
   )
 
-  if self.Quantity:GetNumber() > self:GetPostLimit() then
+  if self.Quantity:GetNumber() > postLimit then
     self:SetMax()
   end
 
-  self.MaxButton:SetEnabled(self.Quantity:GetNumber() ~= self:GetPostLimit())
+  self.MaxButton:SetEnabled(self.Quantity:GetNumber() ~= postLimit)
 
   self.DepositPrice:SetText(Auctionator.Utilities.CreateMoneyString(self:GetDeposit()))
   self:UpdatePostButtonState()
@@ -146,6 +154,10 @@ function AuctionatorSaleItemMixin:SetMax()
 end
 
 function AuctionatorSaleItemMixin:GetDeposit()
+  if self.itemInfo.location == nil or not self.itemInfo.location:IsValid() then
+    return 0
+  end
+
   local deposit = 0
 
   if self.itemInfo.itemType == Auctionator.Constants.ITEM_TYPES.COMMODITY then
@@ -163,7 +175,7 @@ function AuctionatorSaleItemMixin:GetDeposit()
     )
   end
 
-  return NormalizePrice(deposit)
+  return deposit
 end
 
 function AuctionatorSaleItemMixin:ReceiveEvent(event, ...)
@@ -243,12 +255,17 @@ function AuctionatorSaleItemMixin:SetItemName()
     self.TitleArea.Text:SetText(self.itemInfo.keyName)
 
   else
-    Auctionator.AH.GetItemKeyInfo(self.itemInfo.itemKey, function(itemInfo)
-      self.itemInfo.keyName = AuctionHouseUtil.GetItemDisplayTextFromItemKey(
-        self.itemInfo.itemKey, itemInfo, false
+    local pendingItemInfo = self.itemInfo
+
+    Auctionator.AH.GetItemKeyInfo(pendingItemInfo.itemKey, function(keyInfo)
+      pendingItemInfo.keyName = AuctionHouseUtil.GetItemDisplayTextFromItemKey(
+        pendingItemInfo.itemKey, keyInfo, false
       )
-      self.TitleArea.Text:SetText(self.itemInfo.keyName)
-      self:UpdateVisuals()
+
+      if self.itemInfo == pendingItemInfo then
+        self.TitleArea.Text:SetText(pendingItemInfo.keyName)
+        self:UpdateVisuals()
+      end
     end)
   end
 end
@@ -315,9 +332,9 @@ function AuctionatorSaleItemMixin:DoSearch(itemInfo, ...)
   local sortingOrder
 
   if itemInfo.itemType == Auctionator.Constants.ITEM_TYPES.COMMODITY then
-    sortingOrder = {sortOrder = 0, reverseSort = false}
+    sortingOrder = {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false}
   else
-    sortingOrder = {sortOrder = 4, reverseSort = false}
+    sortingOrder = {sortOrder = Enum.AuctionHouseSortOrder.Buyout, reverseSort = false}
   end
 
   if IsEquipment(itemInfo) and not Auctionator.Config.Get(Auctionator.Config.Options.SELLING_GEAR_USE_ILVL) then
@@ -352,7 +369,7 @@ function AuctionatorSaleItemMixin:SetEquipmentMultiplier(itemLink)
 
   local multiplier = Auctionator.Config.Get(Auctionator.Config.Options.GEAR_PRICE_MULTIPLIER)
   local vendorPrice = select(11, GetItemInfo(itemLink))
-  if multiplier ~= 0 and vendorPrice ~= 0 then
+  if multiplier ~= 0 and vendorPrice ~= nil and vendorPrice ~= 0 then
     -- Check for a vendor price multiplier being set (and a vendor price)
     self:UpdateSalesPrice(
       vendorPrice * multiplier + self:GetDeposit()
@@ -514,7 +531,7 @@ function AuctionatorSaleItemMixin:GetPostButtonState()
     self.itemInfo.location:IsValid() and
 
     -- Sufficient money to cover deposit
-    GetMoney() > self:GetDeposit() and
+    GetMoney() >= self:GetDeposit() and
 
     -- Valid quantity
     self.Quantity:GetNumber() > 0 and

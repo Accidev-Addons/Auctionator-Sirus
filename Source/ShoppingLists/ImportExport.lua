@@ -21,11 +21,15 @@ function Auctionator.ShoppingLists.BatchImportFromString(importString)
   for index, list in ipairs(lists) do
     local name, items = strsplit("^", list, 2)
 
-    if Auctionator.ShoppingLists.ListIndex(name) == nil and name ~= nil and name:len() > 0 then
-      Auctionator.ShoppingLists.Create(name)
-    end
+    if name ~= nil and name:len() > 0 then
+      if Auctionator.ShoppingLists.ListIndex(name) ~= nil then
+        name = Auctionator.ShoppingLists.GetUnusedListName(name)
+      end
 
-    Auctionator.ShoppingLists.OneImportFromString(name, items)
+      Auctionator.ShoppingLists.Create(name)
+      Auctionator.ShoppingLists.OneImportFromString(name, items)
+      Auctionator.ShoppingLists.FireListCreated(name)
+    end
   end
 end
 
@@ -63,11 +67,15 @@ function Auctionator.ShoppingLists.OldBatchImportFromString(importString)
   for index, list in ipairs(lists) do
     local name, items = strsplit("\n", list, 2)
 
-    if Auctionator.ShoppingLists.ListIndex(name) == nil then
-      Auctionator.ShoppingLists.Create(name)
-    end
+    if name ~= nil and name:len() > 0 then
+      if Auctionator.ShoppingLists.ListIndex(name) ~= nil then
+        name = Auctionator.ShoppingLists.GetUnusedListName(name)
+      end
 
-    Auctionator.ShoppingLists.OldOneImportFromString(name, items)
+      Auctionator.ShoppingLists.Create(name)
+      Auctionator.ShoppingLists.OldOneImportFromString(name, items)
+      Auctionator.ShoppingLists.FireListCreated(name)
+    end
   end
 end
 
@@ -80,6 +88,59 @@ function Auctionator.ShoppingLists.OldOneImportFromString(listName, importString
 end
 
 local TSMImportName = "TSM (" .. AUCTIONATOR_L_TEMPORARY_LOWER_CASE .. ")"
+
+local function FireTSMListCreated(list)
+  Auctionator.EventBus
+    :RegisterSource(Auctionator.ShoppingLists.TSMImportFromString, "TSMImportFromString")
+    :Fire(Auctionator.ShoppingLists.TSMImportFromString, Auctionator.ShoppingLists.Events.ListCreated, list)
+    :UnregisterSource(Auctionator.ShoppingLists.TSMImportFromString)
+end
+
+local TSMResolveFrame
+
+local function ResolveTSMNames(list, pending, pendingCount)
+  if pendingCount == 0 then
+    return
+  end
+
+  if TSMResolveFrame == nil then
+    TSMResolveFrame = CreateFrame("FRAME")
+  end
+
+  TSMResolveFrame.list = list
+  TSMResolveFrame.pending = pending
+  TSMResolveFrame.pendingCount = pendingCount
+
+  TSMResolveFrame:SetScript("OnEvent", function(self, event, receivedID)
+    if event ~= "GET_ITEM_INFO_RECEIVED" then
+      return
+    end
+
+    local indices = self.pending[receivedID]
+    if indices == nil then
+      return
+    end
+
+    local name = GetItemInfo(receivedID)
+    if name == nil then
+      return
+    end
+
+    for _, listIndex in ipairs(indices) do
+      self.list.items[listIndex] = name
+    end
+    self.pending[receivedID] = nil
+    self.pendingCount = self.pendingCount - 1
+
+    if self.pendingCount <= 0 then
+      self:UnregisterEvent("GET_ITEM_INFO_RECEIVED")
+    end
+
+    FireTSMListCreated(self.list)
+  end)
+
+  TSMResolveFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+end
 
 --Import a TSM group in the format
 --  i:itemID 1,i:itemID 2 OR
@@ -94,6 +155,9 @@ function Auctionator.ShoppingLists.TSMImportFromString(importString)
   local left = #itemStrings
   local items = {}
 
+  local pending = {}
+  local pendingCount = 0
+
   for index, itemString in ipairs(itemStrings) do
     --TSM uses the same format for normal items and pets, so we try to load an
     --item with the ID first, if that doesn't work, then we try loading a pet.
@@ -104,7 +168,16 @@ function Auctionator.ShoppingLists.TSMImportFromString(importString)
     items[index] = GetItemInfo(id)
 
     if items[index] == nil then
-      items[index] = "IMPORT ERROR"
+      if id == nil then
+        items[index] = "IMPORT ERROR"
+      else
+        items[index] = tostring(id)
+        if pending[id] == nil then
+          pending[id] = {}
+          pendingCount = pendingCount + 1
+        end
+        table.insert(pending[id], index)
+      end
     end
 
     left = left - 1
@@ -118,10 +191,9 @@ function Auctionator.ShoppingLists.TSMImportFromString(importString)
       local list = Auctionator.ShoppingLists.GetListByName(TSMImportName)
       list.items = items
 
-      Auctionator.EventBus
-        :RegisterSource(Auctionator.ShoppingLists.TSMImportFromString, "TSMImportFromString")
-        :Fire(Auctionator.ShoppingLists.TSMImportFromString, Auctionator.ShoppingLists.Events.ListCreated, list)
-        :UnregisterSource(Auctionator.ShoppingLists.TSMImportFromString)
+      FireTSMListCreated(list)
+
+      ResolveTSMNames(list, pending, pendingCount)
     end
   end
 end

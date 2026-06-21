@@ -97,6 +97,10 @@ function AuctionatorListExportFrameMixin:RefreshLists()
 
   local height = 0
 
+  while #self.checkBoxPool < #Auctionator.ShoppingLists.Lists do
+    self:AddToPool()
+  end
+
   for _, checkbox in ipairs(self.checkBoxPool) do
     checkbox:Hide()
   end

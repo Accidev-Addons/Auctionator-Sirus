@@ -166,7 +166,7 @@ deInsert(deTable, {46, 50, 100, {2,4}, LARGE_RADIANT});
 deInsert(deTable, {51, 55, 100, {2,4}, SMALL_BRILLIANT});
 deInsert(deTable, {56, 60, 100, 1, NEXUS_CRYSTAL});
 --deInsert(deTable, {61, 80, FILLED IN BELOW
-deInsert(deTable, {95, 100, 100, {1,2}, VOID_CRYSTAL});
+deInsert(deTable, {95, 104, 100, {1,2}, VOID_CRYSTAL});
 deInsert(deTable, {105, 164, 33.3, 1, VOID_CRYSTAL, 66.6, 2, VOID_CRYSTAL});
 deInsert(deTable, {165, 200, 100, 1, ABYSS_CRYSTAL});
 deInsert(deTable, {200, 999, 100, 1, ABYSS_CRYSTAL});

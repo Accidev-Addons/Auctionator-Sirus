@@ -34,11 +34,7 @@ function AuctionatorScrollListLineMixin:ReceiveEvent(eventName, eventData, ...)
 end
 
 function AuctionatorScrollListLineMixin:GetListIndex()
-  for index, name in ipairs(self.currentList.items) do
-    if self.searchTerm == name then
-      return index
-    end
-  end
+  return self.dataIndex
 end
 
 function AuctionatorScrollListLineMixin:DeleteItem()
@@ -62,6 +58,9 @@ end
 
 function AuctionatorScrollListLineMixin:ShiftItem(amount)
   local index = self:GetListIndex()
+  if index == nil then
+    return
+  end
   local otherItem = self.currentList.items[index + amount]
   if otherItem ~= nil then
     self.currentList.items[index] = otherItem

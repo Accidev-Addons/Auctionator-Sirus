@@ -41,7 +41,6 @@ function Auctionator.ReagentSearch.GetSkillReagentsTotal()
         unitPrice = Auctionator.API.v1.GetAuctionPriceByItemLink(AUCTIONATOR_L_REAGENT_SEARCH, link)
       end
 
-      local unitPrice = Auctionator.API.v1.GetAuctionPriceByItemLink(AUCTIONATOR_L_REAGENT_SEARCH, link)
       if unitPrice ~= nil then
         total = total + reagentCount * unitPrice
       end

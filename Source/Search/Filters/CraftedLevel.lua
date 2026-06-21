@@ -8,17 +8,19 @@ local CRAFTED_EVENTS = {
 local function IsCraftedCategory(classID)
   return
     classID == LE_ITEM_CLASS_GEM or
-    classID == LE_ITEM_CLASS_ITEM_ENHANCEMENT or
     classID == LE_ITEM_CLASS_CONSUMABLE
 end
 
 function Auctionator.Search.Filters.CraftedLevelMixin:Init(filterTracker, browseResult, limits)
-  Auctionator.EventBus:Register(self, CRAFTED_EVENTS)
-
   self.browseResult = browseResult
   self.limits = limits
   self.filterTracker = filterTracker
-  
+
+  if self.limits.min ~= nil or self.limits.max ~= nil then
+    Auctionator.EventBus:Register(self, CRAFTED_EVENTS)
+    self.registered = true
+  end
+
   self:TryComplete()
 end
 
@@ -64,6 +66,11 @@ function Auctionator.Search.Filters.CraftedLevelMixin:InRange(craftedLevel)
 end
 
 function Auctionator.Search.Filters.CraftedLevelMixin:PostComplete(result)
+  if self.registered then
+    Auctionator.EventBus:Unregister(self, CRAFTED_EVENTS)
+    self.registered = false
+  end
+
   self.filterTracker:ReportFilterComplete(result)
 end
 

@@ -66,12 +66,7 @@ function AuctionatorUndercutScanMixin:EndScan()
 end
 
 local function ShouldInclude(itemKey)
-  if Auctionator.Config.Get(Auctionator.Config.Options.UNDERCUT_SCAN_NOT_LIFO) then
-    return true
-  else
-    local classType = select(6, GetItemInfo(itemLink))
-    return classType ~= ITEM_CLASS_2 and classType ~= ITEM_CLASS_4
-  end
+  return Auctionator.Config.Get(Auctionator.Config.Options.UNDERCUT_SCAN_NOT_LIFO) or not Auctionator.Utilities.IsNotLIFOItemKey(itemKey)
 end
 function AuctionatorUndercutScanMixin:NextStep()
   Auctionator.Debug.Message("next step")
@@ -85,10 +80,10 @@ function AuctionatorUndercutScanMixin:NextStep()
   self.currentAuction = C_AuctionHouse.GetOwnedAuctionInfo(self.scanIndex)
   local itemKeyString = Auctionator.Utilities.ItemKeyString(self.currentAuction.itemKey)
 
-  if (self.currentAuction.status == 1 or (type(self.currentAuction.bidder) == "string") or not ShouldInclude(self.currentAuction.itemKey)) then
+  if (self.currentAuction.status == Enum.AuctionStatus.Sold or (type(self.currentAuction.bidder) == "string") or not ShouldInclude(self.currentAuction.itemKey)) then
     Auctionator.Debug.Message("undercut scan skip")
 
-    self:NextStep()
+    return self:NextStep()
   elseif self.seenAuctionResults[itemKeyString] ~= nil then
     Auctionator.Debug.Message("undercut scan already seen")
 
@@ -97,7 +92,7 @@ function AuctionatorUndercutScanMixin:NextStep()
       self.seenAuctionResults[itemKeyString]
     )
 
-    self:NextStep()
+    return self:NextStep()
   else
     Auctionator.Debug.Message("undercut scan searching for undercuts", self.currentAuction.auctionID)
 
@@ -125,8 +120,10 @@ function AuctionatorUndercutScanMixin:OnEvent(eventName, ...)
     self:SetCancel()
 
   else
-    Auctionator.Debug.Message("search results")
-    self:ProcessSearchResults(self.currentAuction, ...)
+    if self.currentAuction then
+      Auctionator.Debug.Message("search results")
+      self:ProcessSearchResults(self.currentAuction, ...)
+    end
   end
 end
 
@@ -195,6 +192,7 @@ function AuctionatorUndercutScanMixin:ProcessSearchResults(auctionInfo, ...)
   end
 
   if resultCount == 0 then
+    self:NextStep()
     return
   end
 
@@ -209,7 +207,7 @@ function AuctionatorUndercutScanMixin:ProcessUndercutResult(auctionInfo, notUnde
     table.insert(self.undercutAuctions, auctionInfo)
   end
 
-  local itemKeyString = Auctionator.Utilities.ItemKeyString(self.currentAuction.itemKey)
+  local itemKeyString = Auctionator.Utilities.ItemKeyString(auctionInfo.itemKey)
   self.seenAuctionResults[itemKeyString] = notUndercutIDs
 
   Auctionator.EventBus:Fire(
@@ -243,10 +241,7 @@ function AuctionatorUndercutScanMixin:CancelAllAuctions()
     local info = C_AuctionHouse.GetOwnedAuctionInfo(index)
 
     if info and info.auctionID then
-      Auctionator.EventBus
-        :RegisterSource(self, "CancelAllAuctions")
-        :Fire(self, Auctionator.Cancelling.Events.RequestAllCancel, info.auctionID)
-        :UnregisterSource(self)
+      Auctionator.EventBus:Fire(self, Auctionator.Cancelling.Events.RequestAllCancel, info.auctionID)
     end
   end
 end

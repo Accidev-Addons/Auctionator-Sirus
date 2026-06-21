@@ -25,6 +25,15 @@ function Auctionator.ShoppingLists.CreateTemporary(listName)
   Auctionator.ShoppingLists.Sort()
 end
 
+function Auctionator.ShoppingLists.FireListCreated(listName)
+  local list = Auctionator.ShoppingLists.Lists[Auctionator.ShoppingLists.ListIndex(listName)]
+
+  Auctionator.EventBus
+    :RegisterSource(Auctionator.ShoppingLists.FireListCreated, "ShoppingLists.FireListCreated")
+    :Fire(Auctionator.ShoppingLists.FireListCreated, Auctionator.ShoppingLists.Events.ListCreated, list)
+    :UnregisterSource(Auctionator.ShoppingLists.FireListCreated)
+end
+
 function Auctionator.ShoppingLists.MakePermanent(listName)
   local list = Auctionator.ShoppingLists.GetListByName(listName)
   list.isTemporary = false

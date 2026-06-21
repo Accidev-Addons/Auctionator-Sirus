@@ -94,6 +94,7 @@ function AuctionatorShoppingListTabMixin:ReceiveEvent(eventName, eventData)
     self.selectedList = eventData
     self.AddItem:Enable()
   elseif eventName == ListDeleted then
+    self.selectedList = nil
     self.Rename:Disable()
     self.AddItem:Disable()
     self.ManualSearch:Disable()

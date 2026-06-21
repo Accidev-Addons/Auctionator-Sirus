@@ -1,7 +1,9 @@
 function Auctionator.Utilities.DBKeyFromBrowseResult(result)
-    if result.itemKey.itemLevel >= Auctionator.Constants.ITEM_LEVEL_THRESHOLD then
+    local itemLevel = result.itemKey.itemLevel or 0
+
+    if itemLevel >= Auctionator.Constants.ITEM_LEVEL_THRESHOLD then
       return {
-        "g:" .. result.itemKey.itemID .. ":" .. result.itemKey.itemLevel,
+        "g:" .. result.itemKey.itemID .. ":" .. itemLevel,
         tostring(result.itemKey.itemID)
       }
     else

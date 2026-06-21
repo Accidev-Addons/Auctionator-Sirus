@@ -1,7 +1,9 @@
 AuctionatorEscapeToCloseMixin = {}
 
 function AuctionatorEscapeToCloseMixin:OnShow()
-  SetOverrideBinding(self, true, "ESCAPE", string.format("CLICK %s:RightButton", self:GetName()))
+  if self:GetName() and self:IsObjectType("Button") then
+    SetOverrideBinding(self, true, "ESCAPE", string.format("CLICK %s:RightButton", self:GetName()))
+  end
 end
 
 function AuctionatorEscapeToCloseMixin:OnHide()

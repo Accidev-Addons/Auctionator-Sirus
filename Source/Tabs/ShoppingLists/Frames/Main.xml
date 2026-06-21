@@ -170,7 +170,7 @@
             Mixin(self, AuctionatorScrollListMixin)
             self:OnLoad()
 
-			local insetFrameBg = self.InsetFrame.Bgs or self.InsetFrame.Bg
+            local insetFrameBg = self.InsetFrame.Bgs or self.InsetFrame.Bg
             insetFrameBg:SetAllPoints(true)
             insetFrameBg:SetAtlas("auctionhouse-background-sell-right")
             self.InsetFrame.InsetBorderTopLeft:SetDrawLayer("ARTWORK")

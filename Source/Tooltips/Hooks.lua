@@ -167,8 +167,7 @@ hooksecurefunc("InboxFrameItem_OnEnter",
           if itemLink then
             table.insert(itemEntries, {
               link = itemLink,
-              count = itemCount,
-              name = name
+              count = itemCount
             })
           end
         end

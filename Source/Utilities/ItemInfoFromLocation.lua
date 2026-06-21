@@ -22,11 +22,10 @@ function Auctionator.Utilities.ItemInfoFromLocation(location)
   local icon, itemCount, _, _, _, _, itemLink = GetContainerItemInfo(location:GetBagAndSlot())
 
   local _, _, quality, _, _, classID = GetItemInfo(itemLink or itemKey.itemID)
-  classID = classIdMap[classID]
+  classID = classIdMap[classID] or LE_ITEM_CLASS_MISCELLANEOUS
 
   -- The first time the AH is loaded sometimes when a full scan is running the
-  -- quality info may not be available. This just gives a sensible fail value.
-  if quality == -1 then
+  if quality == nil or quality == -1 then
     Auctionator.Debug.Message("Missing quality", itemKey.itemID)
     quality = 1
   end
