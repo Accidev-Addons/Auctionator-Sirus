@@ -18,13 +18,15 @@ function Auctionator.Selling.CalculateLIFOPriceFromPrice(basePrice)
   local value
 
   if userPrefersPercentage() then
-    value = basePrice * getPercentage()
+    local percentage = getPercentage()
+    value = basePrice * percentage
 
-    Auctionator.Debug.Message("Percentage calculation", basePrice, getPercentage(), value)
+    Auctionator.Debug.Message("Percentage calculation", basePrice, percentage, value)
   else
-    value = basePrice - getSetAmount()
+    local setAmount = getSetAmount()
+    value = basePrice - setAmount
 
-    Auctionator.Debug.Message("Static value calculation", basePrice, getSetAmount(), value)
+    Auctionator.Debug.Message("Static value calculation", basePrice, setAmount, value)
   end
 
   --Ensure the value is at least 1s

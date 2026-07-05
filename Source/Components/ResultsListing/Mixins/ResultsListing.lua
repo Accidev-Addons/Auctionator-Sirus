@@ -14,6 +14,12 @@ function AuctionatorResultsListingMixin:Init(dataProvider)
   -- Keey scroll bar visible (HybridScrollFrame.lua#255)
   HybridScrollFrame_SetDoNotHideScrollBar(self.ScrollFrame, true)
 
+  self.ScrollFrame.update = function()
+    self:UpdateTable()
+  end
+
+  self.buttonHeight = HybridScrollFrame_GetButtons(self.ScrollFrame)[1]:GetHeight()
+
   -- Create an instance of table builder - note that the ScrollFrame we reference
   -- mixes a TableBuilder implementation in
   self.tableBuilder = CreateTableBuilder(HybridScrollFrame_GetButtons(self.ScrollFrame))
@@ -53,7 +59,7 @@ function AuctionatorResultsListingMixin:InitializeDataProvider()
   end)
 
   self.dataProvider:SetOnResetScrollCallback(function()
-    self.savedScrollPosition = self.ScrollFrame.scrollBar:GetValue()
+    self.savedScrollPosition = 0
   end)
 end
 
@@ -108,10 +114,12 @@ function AuctionatorResultsListingMixin:OnShow()
   self:UpdateTable()
 end
 
--- TODO I can't figure out where the magic is that causes this to be invoked...
--- I think its in one of the HybridScrollFrame_ methods that SetScript(OnUpdate...)?
 function AuctionatorResultsListingMixin:OnUpdate()
   if not self.isInitialized then
+    return
+  end
+
+  if HybridScrollFrame_GetOffset(self.ScrollFrame) == self.lastRenderedOffset then
     return
   end
 
@@ -163,17 +171,22 @@ function AuctionatorResultsListingMixin:UpdateTable()
   local buttons = HybridScrollFrame_GetButtons(self.ScrollFrame)
   local buttonCount = #buttons
   local displayCount = self.dataProvider:GetCount()
-  local buttonHeight = buttons[1]:GetHeight()
+  local buttonHeight = self.buttonHeight or buttons[1]:GetHeight()
   local visibleElementHeight = displayCount * buttonHeight
 
   local offset = HybridScrollFrame_GetOffset(self.ScrollFrame)
   local populateCount = math.min(buttonCount, displayCount)
 
+  self.lastRenderedOffset = offset
+
   self.tableBuilder:Populate(offset, populateCount)
 
-  for i = 1, buttonCount do
-    local visible = i <= displayCount
-    buttons[i]:SetShown(visible)
+  local visibleCount = math.min(buttonCount, displayCount)
+  if self.lastVisibleCount ~= visibleCount then
+    for i = 1, buttonCount do
+      buttons[i]:SetShown(i <= displayCount)
+    end
+    self.lastVisibleCount = visibleCount
   end
 
   local regionHeight = self.ScrollFrame:GetHeight()

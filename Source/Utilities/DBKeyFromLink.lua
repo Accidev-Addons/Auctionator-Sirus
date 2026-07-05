@@ -11,11 +11,6 @@ function Auctionator.Utilities.BasicDBKeyFromLink(itemLink)
   return nil
 end
 
-local function IsGear(itemLink)
-  local classType = select(6, GetItemInfo(itemLink))
-  return classType == ITEM_CLASS_2 or classType == ITEM_CLASS_4
-end
-
 function Auctionator.Utilities.DBKeyFromLink(itemLink, callback)
   if itemLink == nil then
     callback({})
@@ -24,8 +19,10 @@ function Auctionator.Utilities.DBKeyFromLink(itemLink, callback)
 
   local basicKey = Auctionator.Utilities.BasicDBKeyFromLink(itemLink)
 
-  if IsGear(itemLink) then
-    local _, _, _, itemLevel = GetItemInfo(itemLink)
+  local _, _, _, itemLevel, _, classType = GetItemInfo(itemLink)
+  local isGear = classType == ITEM_CLASS_2 or classType == ITEM_CLASS_4
+
+  if isGear then
     if not itemLevel then
       itemLevel = 0
     end

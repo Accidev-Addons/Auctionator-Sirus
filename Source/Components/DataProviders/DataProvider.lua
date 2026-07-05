@@ -130,8 +130,9 @@ function AuctionatorDataProviderMixin:AppendEntries(entries, isLastSetOfResults)
   self.searchCompleted = isLastSetOfResults
   self.announcedCompletion = false
 
-  for _, entry in ipairs(entries) do
-    table.insert(self.entriesToProcess, entry)
+  local base = #self.entriesToProcess
+  for i = 1, #entries do
+    self.entriesToProcess[base + i] = entries[i]
   end
 end
 
@@ -176,13 +177,15 @@ function AuctionatorDataProviderMixin:CheckForEntriesToProcess()
     end
   end
 
-  if self.presetSort.key ~= nil and self.presetSort.direction ~= nil then
-    self:Sort(self.presetSort.key, self.presetSort.direction)
-  end
+  if #self.entriesToProcess == 0 then
+    if self.presetSort.key ~= nil and self.presetSort.direction ~= nil then
+      self:Sort(self.presetSort.key, self.presetSort.direction)
+    end
 
-  if #self.entriesToProcess == 0 and self.searchCompleted then
-    self.onSearchEnded()
-    self.announcedCompletion = true
+    if self.searchCompleted then
+      self.onSearchEnded()
+      self.announcedCompletion = true
+    end
   end
 
   self.onUpdate(self.results)
@@ -200,40 +203,30 @@ end
 function AuctionatorDataProviderMixin:GetCSV(callback)
   if self:GetCount() == 0 then
     callback("")
+    return
   end
-
-  local csvResult = ""
 
   local layout = self:GetTableLayout()
 
-  for index, column in ipairs(layout) do
-    csvResult = csvResult .. WrapCSVParameter(column.headerText)
+  local lines = {}
 
-    if index ~= #layout then
-      csvResult = csvResult ..  ","
-    end
+  local header = {}
+  for index, column in ipairs(layout) do
+    header[index] = WrapCSVParameter(column.headerText)
   end
-  csvResult = csvResult .. "\n"
+  lines[#lines + 1] = table.concat(header, ",")
 
   local function DoRows(start, finish)
     finish = math.min(finish, self:GetCount())
 
-    local index = start
-    while index <= finish do
+    for index = start, finish do
       local row = self.results[index]
+      local cells = {}
       for column, cell in ipairs(layout) do
-        csvResult = csvResult .. WrapCSVParameter(row[cell.headerParameters[1]])
-
-        if column ~= #layout then
-          csvResult = csvResult .. ","
-        end
+        local fieldKey = cell.headerParameters and cell.headerParameters[1]
+        cells[column] = WrapCSVParameter(fieldKey ~= nil and row[fieldKey] or "")
       end
-
-      if index ~= self:GetCount() then
-        csvResult = csvResult .. "\n"
-      end
-
-      index = index + 1
+      lines[#lines + 1] = table.concat(cells, ",")
     end
 
     if finish < self:GetCount() then
@@ -241,7 +234,7 @@ function AuctionatorDataProviderMixin:GetCSV(callback)
         DoRows(finish + 1, (finish - start) + finish + 1)
       end)
     else
-      callback(csvResult)
+      callback(table.concat(lines, "\n"))
     end
   end
 

@@ -1,6 +1,7 @@
 local L = Auctionator.Locales.Apply
 
 local waitingForPricing = false
+local scanningTooltipLines
 -- Auctionator.Config.Options.VENDOR_TOOLTIPS: true if should show vendor tips
 -- Auctionator.Config.Options.SHIFT_STACK_TOOLTIPS: true to show stack price when [shift] is down
 -- Auctionator.Config.Options.AUCTION_TOOLTIPS: true if should show auction tips
@@ -73,11 +74,14 @@ function Auctionator.Tooltip.ShowTipWithPricingDBKey(tooltipFrame, dbKeys, itemL
     return
   end
 
-  local showStackPrices = IsShiftKeyDown();
+  local shiftDown = IsShiftKeyDown();
+  local showStackPrices = shiftDown
 
   if not Auctionator.Config.Get(Auctionator.Config.Options.SHIFT_STACK_TOOLTIPS) then
-    showStackPrices = not IsShiftKeyDown();
+    showStackPrices = not shiftDown
   end
+
+  local stackMultiplier = (showStackPrices and itemCount) or 1
 
   local countString = ""
   if itemCount and showStackPrices then
@@ -86,39 +90,49 @@ function Auctionator.Tooltip.ShowTipWithPricingDBKey(tooltipFrame, dbKeys, itemL
 
   local auctionPrice = Auctionator.Database:GetFirstPrice(dbKeys)
   if auctionPrice ~= nil then
-    auctionPrice = auctionPrice * (showStackPrices and itemCount or 1)
+    auctionPrice = auctionPrice * stackMultiplier
   end
 
-  local vendorPrice, disenchantStatus, disenchantPrice
+  local vendorPrice, disenchantStatus, disenchantPrice, disenchantInfo
   local cannotAuction = false;
 
   local itemInfo = { GetItemInfo(itemLink) };
 
-  AuctionatorScanningTooltip:ClearLines()
-  AuctionatorScanningTooltip:SetHyperlink(itemLink)
-  AuctionatorScanningTooltip:Show()
+  if Auctionator.Config.Get(Auctionator.Config.Options.AUCTION_TOOLTIPS) then
+    AuctionatorScanningTooltip:ClearLines()
+    AuctionatorScanningTooltip:SetHyperlink(itemLink)
+    AuctionatorScanningTooltip:Show()
 
-  for i = 1, ENABLE_COLORBLIND_MODE == "1" and 5 or 4 do
-    local leftText = _G["AuctionatorScanningTooltipTextLeft"..i]
-    if not leftText then
-      break
+    if scanningTooltipLines == nil then
+      scanningTooltipLines = {}
+      for i = 1, 5 do
+        scanningTooltipLines[i] = _G["AuctionatorScanningTooltipTextLeft"..i]
+      end
     end
-    
-    local text = leftText:GetText()
-    if bindTypes[text] then
-      cannotAuction = true
-      break
+
+    local lineCount = ENABLE_COLORBLIND_MODE == "1" and 5 or 4
+    for i = 1, lineCount do
+      local leftText = scanningTooltipLines[i]
+      if not leftText then
+        break
+      end
+
+      local text = leftText:GetText()
+      if bindTypes[text] then
+        cannotAuction = true
+        break
+      end
     end
   end
 
   if (#itemInfo) ~= 0 then
     local sellPrice = itemInfo[Auctionator.Constants.ITEM_INFO.SELL_PRICE]
     if sellPrice ~= nil then
-      vendorPrice = sellPrice * (showStackPrices and itemCount or 1);
+      vendorPrice = sellPrice * stackMultiplier;
     end
 
     disenchantStatus = Auctionator.Enchant.DisenchantStatus(itemInfo)
-    disenchantPrice = Auctionator.Enchant.GetDisenchantAuctionPrice(itemLink)
+    disenchantPrice, disenchantInfo = Auctionator.Enchant.GetDisenchantAuctionPrice(itemLink, itemInfo)
   end
 
   if Auctionator.Debug.IsOn() then
@@ -142,7 +156,6 @@ function Auctionator.Tooltip.ShowTipWithPricingDBKey(tooltipFrame, dbKeys, itemL
   if (deDeailsTooltip == 4) then showDetails = true end
 
   if disenchantPrice and showDetails then
-    local disenchantInfo = Auctionator.Enchant.GetDisenchantReagents(itemInfo)
     if disenchantInfo then
       for i = 3, #disenchantInfo, 3 do
         local percent = math.floor(disenchantInfo[i] * 100) / 100;

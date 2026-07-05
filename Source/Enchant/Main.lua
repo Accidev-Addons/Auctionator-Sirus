@@ -52,8 +52,8 @@ function Auctionator.Enchant.GetDisenchantReagents(itemInfo)
   end
 end
 
-function Auctionator.Enchant.GetDisenchantAuctionPrice(itemLink)
-  local itemInfo = { GetItemInfo(itemLink) }
+function Auctionator.Enchant.GetDisenchantAuctionPrice(itemLink, itemInfo)
+  itemInfo = itemInfo or { GetItemInfo(itemLink) }
 
   if not isDisenchantable(itemInfo) then
     return nil
@@ -74,5 +74,5 @@ function Auctionator.Enchant.GetDisenchantAuctionPrice(itemLink)
     end
   end
 
-  return math.floor(price / 100)
+  return math.floor(price / 100), disenchantInfo
 end
