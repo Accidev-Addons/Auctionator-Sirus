@@ -1,7 +1,7 @@
 AuctionatorItemHistoryProviderMixin = CreateFromMixins(AuctionatorHistoricalPriceProviderMixin)
 
 function AuctionatorItemHistoryProviderMixin:GetRowTemplate()
-  return "AuctionatorResultsRowTemplate"
+  return "AuctionatorHistoricalPriceRowTemplate"
 end
 
 function AuctionatorItemHistoryProviderMixin:GetColumnHideStates()

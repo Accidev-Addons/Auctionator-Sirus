@@ -57,12 +57,15 @@ function AuctionatorHistoricalPriceProviderMixin:SetItem(itemKey)
   local dbKey = Auctionator.Utilities.DBKeyFromBrowseResult({ itemKey = itemKey })[1]
   local entries = Auctionator.Database:GetPriceHistory(dbKey)
 
+  local itemID = tonumber(dbKey:match("^(%d+)"))
+
   for _, entry in ipairs(entries) do
     if entry.available then
       entry.availableFormatted = Auctionator.Utilities.DelimitThousands(entry.available)
     else
       entry.availableFormatted = ""
     end
+    entry.itemID = itemID
   end
 
   self:AppendEntries(entries, true)

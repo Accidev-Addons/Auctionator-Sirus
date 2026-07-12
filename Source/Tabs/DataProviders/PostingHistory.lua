@@ -72,7 +72,7 @@ end
 local COMPARATORS = {
   price = Auctionator.Utilities.NumberComparator,
   quantity = Auctionator.Utilities.NumberComparator,
-  rawDay = Auctionator.Utilities.StringComparator
+  rawDay = Auctionator.Utilities.NumberComparator
 }
 
 function AuctionatorPostingHistoryProviderMixin:Sort(fieldName, sortDirection)
