@@ -26,47 +26,8 @@ function Auctionator.Variables.InitializeSavedState()
   Auctionator.SavedState = AUCTIONATOR_SAVEDVARS
 end
 
--- All "realms" that are connected together use the same AH database, this
--- determines which database is in use.
 function Auctionator.Variables.GetConnectedRealmRoot()
-  local currentRealm = GetRealmName()
-  local connections = {} -- TODO: GetAutoCompleteRealms()
-
-  -- We sort so that we always get the same first realm to use for the database
-  table.sort(connections)
-
-  if connections[1] ~= nil then
-    -- Case where we are on a connected realm
-    return connections[1]
-  else
-    -- We are not on a connected realm
-    return currentRealm
-  end
-end
-
--- Attempt to import from other connected realms (this may happen if another
--- realm was connected or the databases are not currently shared)
---
--- Assumes rootRealm has no active database
-local function ImportFromConnectedRealm(rootRealm)
-  local connections = {} -- TODO: GetAutoCompleteRealms()
-
-  if #connections == 0 then
-    return false
-  end
-
-  for _, altRealm in ipairs(connections) do
-
-    if AUCTIONATOR_PRICE_DATABASE[altRealm] ~= nil then
-
-      AUCTIONATOR_PRICE_DATABASE[rootRealm] = AUCTIONATOR_PRICE_DATABASE[altRealm]
-      -- Remove old database (no longer needed)
-      AUCTIONATOR_PRICE_DATABASE[altRealm] = nil
-      return true
-    end
-  end
-
-  return false
+  return GetRealmName()
 end
 
 function Auctionator.Variables.InitializeDatabase()
@@ -91,9 +52,7 @@ function Auctionator.Variables.InitializeDatabase()
 
   -- Check for current realm and initialize if not present
   if AUCTIONATOR_PRICE_DATABASE[realm] == nil then
-    if not ImportFromConnectedRealm(realm) then
-      AUCTIONATOR_PRICE_DATABASE[realm] = {}
-    end
+    AUCTIONATOR_PRICE_DATABASE[realm] = {}
   end
 
   Auctionator.Database = CreateAndInitFromMixin(Auctionator.DatabaseMixin, AUCTIONATOR_PRICE_DATABASE[realm])
