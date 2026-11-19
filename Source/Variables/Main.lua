@@ -26,8 +26,23 @@ function Auctionator.Variables.InitializeSavedState()
   Auctionator.SavedState = AUCTIONATOR_SAVEDVARS
 end
 
+local function NormalizeRealmName(realm)
+  return (string.gsub(realm, "^Proxy%a* ", ""))
+end
+
 function Auctionator.Variables.GetConnectedRealmRoot()
-  return GetRealmName()
+  return NormalizeRealmName(GetRealmName())
+end
+
+local function ImportFromProxyRealm(rootRealm)
+  for realm, prices in pairs(AUCTIONATOR_PRICE_DATABASE) do
+    if realm ~= "__dbversion" and NormalizeRealmName(realm) == rootRealm then
+      AUCTIONATOR_PRICE_DATABASE[rootRealm] = prices
+      AUCTIONATOR_PRICE_DATABASE[realm] = nil
+      return true
+    end
+  end
+  return false
 end
 
 function Auctionator.Variables.InitializeDatabase()
@@ -51,7 +66,7 @@ function Auctionator.Variables.InitializeDatabase()
   local realm = Auctionator.Variables.GetConnectedRealmRoot()
 
   -- Check for current realm and initialize if not present
-  if AUCTIONATOR_PRICE_DATABASE[realm] == nil then
+  if AUCTIONATOR_PRICE_DATABASE[realm] == nil and not ImportFromProxyRealm(realm) then
     AUCTIONATOR_PRICE_DATABASE[realm] = {}
   end
 

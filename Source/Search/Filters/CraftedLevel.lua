@@ -5,10 +5,10 @@ local CRAFTED_EVENTS = {
   Auctionator.Search.Events.BlizzardInfo
 }
 
-local function IsCraftedCategory(classID)
+local function IsCraftedCategory(itemType)
   return
-    classID == LE_ITEM_CLASS_GEM or
-    classID == LE_ITEM_CLASS_CONSUMABLE
+    itemType == ITEM_CLASS_3 or
+    itemType == ITEM_CLASS_0
 end
 
 function Auctionator.Search.Filters.CraftedLevelMixin:Init(filterTracker, browseResult, limits)
@@ -38,7 +38,7 @@ function Auctionator.Search.Filters.CraftedLevelMixin:TryComplete()
     -- We check this first as some items don't ever give a result for
     -- C_AuctionHouse.GetExtraBrowse info. If this passes the object probably
     -- has an extra browse info value.
-    if not IsCraftedCategory(itemInfo[12]) then
+    if not IsCraftedCategory(itemInfo[6]) then
       self:PostComplete(false)
       return
     end

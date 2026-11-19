@@ -104,6 +104,13 @@ function AuctionatorTabContainerMixin:HookTabs()
 
     -- Bail if our tab was not selected
     if not isAuctionatorFrame then
+      local selectedTab = PanelTemplates_GetSelectedTab(frame)
+      if type(selectedTab) == "table" and (
+          frame.displayMode == AuctionHouseFrameDisplayMode.CommoditiesBuy or
+          frame.displayMode == AuctionHouseFrameDisplayMode.ItemBuy
+        ) then
+        PanelTemplates_SelectTab(selectedTab)
+      end
       return
     end
 
