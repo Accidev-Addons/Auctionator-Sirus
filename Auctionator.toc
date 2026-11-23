@@ -1,6 +1,6 @@
 ## Interface: 30300
 ## Title: |cFF9B59B6A|cFFAA77CCu|cFFBB99DDc|cFFAA77CCt|cFF9B59B6i|cFFAA77CCo|cFFBB99DDn|cFFAA77CCa|cFF9B59B6t|cFFAA77CCo|cFFBB99DDr|r
-## Version: 9.1.3
+## Version: 9.1.4
 ## Author: Accidev
 ## X-Localizations: enUS, ruRU
 ## Notes: |@Version: 11@|A lightweight addon that makes it easy and fast to buy, sell and manage auctions
