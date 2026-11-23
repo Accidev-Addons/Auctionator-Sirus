@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
-  <Button name="AuctionatorReagentSearchButtonTemplate" inherits="UIPanelDynamicResizeButtonTemplate" text="AUCTIONATOR_L_SEARCH" virtual="true" hidden="true" toplevel="true" parent="TradeSkillListScrollFrame">
+  <Button name="AuctionatorReagentSearchButtonTemplate" inherits="UIPanelDynamicResizeButtonTemplate" text="AUCTIONATOR_L_SEARCH" virtual="true" hidden="true" toplevel="true">
     <Scripts>
       <OnLoad>
         Mixin(self, AuctionatorReagentSearchButtonMixin)
@@ -9,7 +9,7 @@
       <OnEvent>self:OnEvent(event, ...)</OnEvent>
     </Scripts>
     <Anchors>
-      <Anchor point="BOTTOMLEFT" relativeTo="TradeSkillSkillIcon" relativePoint="BOTTOMRIGHT" x="175" y="0"/>
+      <Anchor point="BOTTOMRIGHT" relativeTo="TradeSkillSkillIcon" relativePoint="BOTTOMLEFT" x="285" y="0"/>
     </Anchors>
     <Layers>
       <Layer level="OVERLAY">

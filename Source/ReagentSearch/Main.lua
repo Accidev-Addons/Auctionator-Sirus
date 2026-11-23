@@ -75,7 +75,7 @@ function Auctionator.ReagentSearch.InitializeSearchButton()
   if TradeSkillFrame then
     addedFunctionality = true
 
-    local buttonFrame = CreateFrame("BUTTON", "AuctionatorTradeSkillSearch", TradeSkillFrame, "AuctionatorReagentSearchButtonTemplate");
+    local buttonFrame = CreateFrame("BUTTON", "AuctionatorTradeSkillSearch", TradeSkillDetailScrollChildFrame, "AuctionatorReagentSearchButtonTemplate");
   end
 end
 
